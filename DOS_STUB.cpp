@@ -17,7 +17,7 @@ int MY_DOS_STUB::Read(FILE *fp)
 int MY_DOS_STUB::Paint()
 {
     using namespace std;
-    cout << "\n_________________DOS Stub:\n";
+    cout << "\nDOS Stub:\n";
     if(MY_DOS_STUB::m_lpOffset_Of_NT_header == 0)
         cout << "No DOS stub or Packed file" << endl;
 
@@ -26,11 +26,13 @@ int MY_DOS_STUB::Paint()
     char *content = this->m_pcontent;
     char ascii[0x10 + 1] = {0};
 
+    cout << "_______________________________________________________________" << endl;
     cout << setw(11) << "Offset";
     cout << setw(48) << "Content";
     cout << setw(17) << "Ascii" << endl;
-    for(i = 0; i < 11+48+5; i++) cout << '-';
-    cout << endl;
+    cout << "---------------------------------------------------------------" << endl;
+
+
     cout << setfill('0') << setiosflags(ios::right);
     cout << "0x" << setw(8) << hex << (LONG)offset << ' ';
     for(i = 0; i < Size; i++)
@@ -44,6 +46,6 @@ int MY_DOS_STUB::Paint()
             cout << "0x" << setw(8) << hex << (LONG)offset << ' ';
         }
     }
-    cout << setfill(' ') << resetiosflags(ios::right) ;
+    cout << setfill(' ') << resetiosflags(ios::right) << endl;
     return 1;
 }
