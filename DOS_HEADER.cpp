@@ -28,10 +28,10 @@ const size_t MY_DOS_HEADER::m_pnSizeTable[] =
     sizeof(WORD), sizeof(WORD)*10, sizeof(LONG)
 };
 
-int MY_DOS_HEADER::Read(FILE* fp, int offset)
+int MY_DOS_HEADER::Read(FILE* fp)
 {
     char *temp = (char*)malloc(sizeof(_MY_IMAGE_DOS_HEADER));
-    fseek(fp, (long)offset, SEEK_SET);
+    fseek(fp, (long)0, SEEK_SET);
     fread(temp, sizeof(char), sizeof(_MY_IMAGE_DOS_HEADER), fp);
     this->m_pDOS_Header = reinterpret_cast<MY_PIMAGE_DOS_HEADER>(temp);
     return 1;
@@ -43,30 +43,32 @@ int MY_DOS_HEADER::Paint()
     unsigned int i, j;
     LONG offset = 0;
     char *content = reinterpret_cast<char *>(this->m_pDOS_Header);
-    cout << "_________________DOS header:\n";
-    cout << setiosflags(ios::left);
+    cout << setfill(' ') <<setiosflags(ios::left);
+    cout << "DOS header:\n";
+    cout << "_______________________________________________________________" << endl;
     cout << setw(11) << "Offset";
-    cout << setw(20) << "Name of member";
-    cout << setw(10) << "Type";
-    cout << setw(3) << "Content\n";
-    cout << "------------------------------------------------" << endl;
+    cout << setw(33) << "Name of member";
+    cout << setw(14) << "Type";
+    cout << setw(3) << "Value\n";
+    cout << "---------------------------------------------------------------" << endl;
     for(i = 0; i < NUMBER_OF_FILE_HEADER; i++)
     {
         cout << setfill('0') << setiosflags(ios::right);
         cout << "0x" << setw(8) << hex << (LONG)offset << ' ';
-        cout<<resetiosflags(ios::right);
-        cout << setfill(' ');
-        cout << setw(20) << MY_DOS_HEADER::m_pszNameTable[i];
-        cout << setw(10) << MY_DOS_HEADER::m_pszTypeTable[i];
+        cout << setfill(' ') <<resetiosflags(ios::right);
+        cout << setw(33) << MY_DOS_HEADER::m_pszNameTable[i];
+        cout << setw(14) << MY_DOS_HEADER::m_pszTypeTable[i];
         cout << setfill('0') << setiosflags(ios::right);
+        content += MY_DOS_HEADER::m_pnSizeTable[i]-1;
         for(j = 0; j < MY_DOS_HEADER::m_pnSizeTable[i]; j++)
-            cout << setw(2) << hex << (unsigned int)(unsigned char)*content++ << ' ';
+            cout << setw(2) << hex << (unsigned int)(unsigned char)*(content-j);
+        content += 1;
         cout<<resetiosflags(ios::right);
-       // Comment(i);
+       Comment(i);
         cout << endl;
         offset += MY_DOS_HEADER::m_pnSizeTable[i];
     }
-    cout << setfill(' ') << resetiosflags(ios::right) ;
+    cout << setfill(' ') << resetiosflags(ios::right) << endl;
     return 1;
 }
 
