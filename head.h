@@ -7,12 +7,16 @@
 #include<stdlib.h>
 #include<stdio.h>
 //#include<winnt.h>
-//IMAGE_FILE_MACHINE
+//_IMAGE_
 typedef unsigned short WORD;
 typedef uint64_t ULONGLONG;
 typedef uint32_t LONG;
 typedef int32_t DWORD;
 typedef char BYTE;
+
+
+
+
 //////////////////////////////////////////////////
 /////DOS Header
 #define NUMBER_OF_DOS_HEADER 19
@@ -44,7 +48,7 @@ class MY_DOS_HEADER
 {
 public:
     MY_PIMAGE_DOS_HEADER m_pDOS_Header;
-    int Read(FILE *fp, int offset);
+    int Read(FILE *fp);
     int Paint();
     int Comment(int index);
 public:
@@ -100,6 +104,7 @@ typedef struct _MY_IMAGE_DATA_DIRECTORY
 
 #define MYIMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
 #define SIZE_OF_OPTIONAL_HEADER64 0xf0
+#define SIZE_OF_OPTIONAL_HEADER32 0xe0
 typedef struct _MY_IMAGE_OPTIONAL_HEADER32
 {
     WORD Magic;
@@ -172,15 +177,9 @@ typedef struct _MY_IMAGE_OPTIONAL_HEADER64
 
 
 #define NUMBER_OF_OPTIONAL_HEADER64 30
+#define NUMBER_OF_OPTIONAL_HEADER32 31
 class MY_OPTIONAL_HEADER
 {
-    union m_pMY_IMAGE_OPTIONAL_HEADER
-    {
-        MYPIMAGE_OPTIONAL_HEADER32 MY_IMAGE_OPTIONAL_HEADER32;
-        MYPIMAGE_OPTIONAL_HEADER64 MT_IMAGE_OPTIONAL_HEADER64;
-    };
-    MYPIMAGE_OPTIONAL_HEADER64 m_pOptional_header64;
-    MYPIMAGE_OPTIONAL_HEADER32 m_pOptional_header32;
     static const char *m_pszTypeTable32[];
     static const char *m_pszNameTable32[];
     static const size_t m_pnSizeTable32[];
@@ -189,6 +188,13 @@ class MY_OPTIONAL_HEADER
     static const size_t m_pnSizeTable64[];
     static const char *m_pszDataDirectoryTable[];
 public:
+    union m_pMY_IMAGE_OPTIONAL_HEADER
+    {
+        MYPIMAGE_OPTIONAL_HEADER32 MY_IMAGE_OPTIONAL_HEADER32;
+        MYPIMAGE_OPTIONAL_HEADER64 MT_IMAGE_OPTIONAL_HEADER64;
+    };
+    MYPIMAGE_OPTIONAL_HEADER64 m_pOptional_header64;
+    MYPIMAGE_OPTIONAL_HEADER32 m_pOptional_header32;
     int Read(FILE *fp);
     int Paint();
     bool Is64;
@@ -245,9 +251,63 @@ class MY_SECTION_HEADERS
     static const size_t m_pnSizeTable[];
 public:
     char *m_pcontent;
-    int Read(FILE *fp);
-    int Paint();
+    char **m_pszSectionNames;
+    DWORD *m_pVirtualAdresses;
+    DWORD *m_pPointerToRawDatas;
+    int Read(FILE *fp, MY_OPTIONAL_HEADER OH);
+    int Paint(MY_OPTIONAL_HEADER OH);
     int numberOfsections;
 };
 
+//////////////////////////////////////////////////
+/////Import Directory Table
+
+
+typedef struct _MY_IMAGE_IMPORT_DESCRIPTOR
+{
+    union
+    {
+        DWORD Characteristics;
+        DWORD OriginalFirstThunk;
+    } DUMMYUNIONNAME;
+    DWORD TimeDateStamp;
+
+    DWORD ForwarderChain;
+    DWORD Name;
+    DWORD FirstThunk;
+} MYIMAGE_IMPORT_DESCRIPTOR;
+
+typedef struct _MY_IMAGE_IMPORT_BY_NAME
+{
+    WORD Hint;
+    BYTE Name[1];
+} MYIMAGE_IMPORT_BY_NAME,*MYPIMAGE_IMPORT_BY_NAME;
+
+#define SIZE_OF_IMAGE_IMPORT_DESCRIPTOR 20
+#define NUMBER_OF_IID 5
+class MY_IMPORT_DIRECTORY_TABLE
+{
+    static const char *m_pszTypeTable[];
+    static const char *m_pszNameTable[];
+    static const size_t m_pnSizeTable[];
+public:
+    char *m_pContent;
+    int number;
+    int Read(FILE *fp, MY_OPTIONAL_HEADER OH, MY_SECTION_HEADERS SH);
+    int Paint();
+    DWORD offset;
+};
+//////////////////////////////////////////////////
+/////Import Name Table & Import Adress Table
+class MY_INT_IAT_TABLE
+{
+public:
+    char **m_pszDllName;
+    DWORD *m_pINToffset;
+    DWORD *m_pIAToffset;
+    int number;
+    int Read(FILE *fp, MY_IMPORT_DIRECTORY_TABLE IDT, MY_SECTION_HEADERS SH);
+    int Paint(FILE *fp, MY_OPTIONAL_HEADER OH, MY_SECTION_HEADERS SH);
+};
+DWORD RVAtoRAW(MY_SECTION_HEADERS section_header, DWORD RVA);
 #endif // _HEAD_H_
